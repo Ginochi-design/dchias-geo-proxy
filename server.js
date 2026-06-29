@@ -75,7 +75,7 @@ app.post('/openai-realtime', async (req, res) => {
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'gpt-4o-search-preview',
         tools: [{ type: 'web_search_preview' }],
         instructions: system,
         input: prompt
@@ -83,7 +83,24 @@ app.post('/openai-realtime', async (req, res) => {
     });
     const data = await response.json();
     if (data.error) return res.status(400).json({ error: data.error.message });
-    const text = data.output?.find(o => o.type === 'message')?.content?.find(c => c.type === 'output_text')?.text || '';
+    // Intentar extraer texto de múltiples estructuras posibles
+    let text = '';
+    if (data.output) {
+      for (const item of data.output) {
+        if (item.type === 'message' && item.content) {
+          for (const c of item.content) {
+            if (c.type === 'output_text' && c.text) {
+              text += c.text;
+            }
+          }
+        }
+      }
+    }
+    // Fallback a estructura de chat completions
+    if (!text && data.choices) {
+      text = data.choices?.[0]?.message?.content || '';
+    }
+    if (!text) text = JSON.stringify(data).slice(0, 200);
     res.json({ response: text });
   } catch (e) {
     res.status(500).json({ error: e.message });
