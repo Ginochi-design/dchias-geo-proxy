@@ -68,45 +68,28 @@ app.post('/openai-base', async (req, res) => {
 app.post('/openai-realtime', async (req, res) => {
   const { prompt, system, apiKey } = req.body;
   try {
-    const response = await fetch('https://api.openai.com/v1/responses', {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: 'gpt-4o-search-preview',
-        tools: [{ type: 'web_search_preview' }],
-        instructions: system,
-        input: prompt
+        model: 'gpt-4o',
+        max_tokens: 1000,
+        messages: [
+          { role: 'system', content: system + ' Usa tu conocimiento más reciente disponible y menciona si la información puede estar desactualizada.' },
+          { role: 'user', content: prompt }
+        ]
       })
     });
     const data = await response.json();
     if (data.error) return res.status(400).json({ error: data.error.message });
-    // Intentar extraer texto de múltiples estructuras posibles
-    let text = '';
-    if (data.output) {
-      for (const item of data.output) {
-        if (item.type === 'message' && item.content) {
-          for (const c of item.content) {
-            if (c.type === 'output_text' && c.text) {
-              text += c.text;
-            }
-          }
-        }
-      }
-    }
-    // Fallback a estructura de chat completions
-    if (!text && data.choices) {
-      text = data.choices?.[0]?.message?.content || '';
-    }
-    if (!text) text = JSON.stringify(data).slice(0, 200);
-    res.json({ response: text });
+    res.json({ response: data.choices?.[0]?.message?.content || '' });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
-
 // Gemini Base
 app.post('/gemini-base', async (req, res) => {
   const { prompt, system, apiKey } = req.body;
