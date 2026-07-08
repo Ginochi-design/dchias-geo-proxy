@@ -76,8 +76,8 @@ app.post('/openai-realtime', async (req, res) => {
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: 'gpt-4o-search-preview',
-        tools: [{ type: 'web_search_preview' }],
+        model: 'gpt-5.4',
+        tools: [{ type: 'web_search' }],
         instructions: system,
         input: prompt
       })
