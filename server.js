@@ -1,7 +1,7 @@
-
 const express = require('express');
 const cors = require('cors');
-const fetch = require('node-fetch');
+// Node 22 trae fetch nativo (undici) — ya no usamos node-fetch,
+// que provocaba errores intermitentes "Premature close" bajo carga concurrente.
 
 const app = express();
 app.use(cors());
